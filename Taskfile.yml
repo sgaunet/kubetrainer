@@ -1,0 +1,30 @@
+# https://taskfile.dev
+version: '3'
+tasks:
+
+  default:
+    desc: "List all tasks"
+    cmds:
+      - task -a
+
+  create-cluster:
+    desc: "Create a kind cluster"
+    dir: manifests/tests
+    cmds:
+      - kind create cluster --config kind-config.yaml
+      - kubectl cluster-info --context kind-kind
+      - kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+      - sleep 15
+      - kubectl wait --namespace ingress-nginx   --for=condition=ready pod   --selector=app.kubernetes.io/component=controller   --timeout=180s
+      - echo kubectl cluster-info --context kind-kind
+    # silent: true
+
+  list-clusters:
+    desc: "List clusters"
+    cmds:
+      - kind get clusters
+
+  delete-cluster:
+    desc: "Delete a kind cluster"
+    cmds:
+      - kind delete cluster
