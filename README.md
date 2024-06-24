@@ -33,3 +33,6 @@ Creating cluster "kind" ...
 $ kubectl cluster-info --context kind-kind  # execute this command to be able to contact the kubernetes cluster
 ```
 
+What should I do now ?
+
+Follow tutorials in the [DOCS](DOCS) directory.
