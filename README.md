@@ -20,7 +20,16 @@ Ok, let's begin by creating the cluster.
 
 # Create the kubernetes cluster
 
+```bash
+$ task create-cluster
+task: [create-cluster] kind create cluster --config kind-config.yaml
+Creating cluster "kind" ...
+...
 ```
-task create-cluster
+
+# Connect to the cluster
+
+```bash
+$ kubectl cluster-info --context kind-kind  # execute this command to be able to contact the kubernetes cluster
 ```
 
