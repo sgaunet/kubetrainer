@@ -1,0 +1,101 @@
+{
+  "lockfile_version": "1",
+  "packages": {
+    "sqlc@1.26.0": {
+      "last_modified": "2024-06-12T20:55:33Z",
+      "resolved": "github:NixOS/nixpkgs/a9858885e197f984d92d7fe64e9fff6b2e488d40#sqlc",
+      "source": "devbox-search",
+      "version": "1.26.0",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/k87s4i4aiswanqznlsslh15mqam7h31s-sqlc-1.26.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/k87s4i4aiswanqznlsslh15mqam7h31s-sqlc-1.26.0"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/q20v0zgb92cfxszwy8whjc2mza1bh24k-sqlc-1.26.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/q20v0zgb92cfxszwy8whjc2mza1bh24k-sqlc-1.26.0"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/2dn1l5zrzsyvn3n7cx6np1f4k0djqm10-sqlc-1.26.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/2dn1l5zrzsyvn3n7cx6np1f4k0djqm10-sqlc-1.26.0"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/3ax2idp45jcx3svnrygz4yxdaqddhdgl-sqlc-1.26.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/3ax2idp45jcx3svnrygz4yxdaqddhdgl-sqlc-1.26.0"
+        }
+      }
+    },
+    "templ@0.2.707": {
+      "last_modified": "2024-06-12T20:55:33Z",
+      "resolved": "github:NixOS/nixpkgs/a9858885e197f984d92d7fe64e9fff6b2e488d40#templ",
+      "source": "devbox-search",
+      "version": "0.2.707",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/i6lgniyx8dsxwxwsnvn9smjdjgq7ymdc-templ-0.2.707",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/i6lgniyx8dsxwxwsnvn9smjdjgq7ymdc-templ-0.2.707"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/499cp4hcc60jbr2v8hpaw39l8ji92hk6-templ-0.2.707",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/499cp4hcc60jbr2v8hpaw39l8ji92hk6-templ-0.2.707"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/6203vcz4g893cfpz7n6nadg1xs9ijhs6-templ-0.2.707",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/6203vcz4g893cfpz7n6nadg1xs9ijhs6-templ-0.2.707"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/jmi9ahlyfyj09karnag91lzmvqvks0ys-templ-0.2.707",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/jmi9ahlyfyj09karnag91lzmvqvks0ys-templ-0.2.707"
+        }
+      }
+    }
+  }
+}
