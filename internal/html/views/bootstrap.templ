@@ -1,0 +1,11 @@
+package views
+
+import "fmt"
+
+templ BootstrapBundle() {
+    <script src={ fmt.Sprintf("/%s/js/bootstrap.bundle.min.js",BootStrapRootDir) }></script>
+}
+
+templ BootstrapCSS() {
+  <link href={ fmt.Sprintf("/%s/css/bootstrap.css",BootStrapRootDir) } rel="stylesheet"/>
+}

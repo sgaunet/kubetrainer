@@ -1,0 +1,50 @@
+package views
+
+import (
+  // "github.com/sgaunet/kubetrainer/pkg/config"
+)
+
+templ IndexPage(livenessState bool,readinessState bool,ErrorMsg string) {
+<!doctype html>
+<html lang="en">
+  @Head()
+  <body>
+
+    <main class="container">
+    <div class="container w-50 p-3">
+      @ModalError(ErrorMsg)
+
+      <main class="form-signin w-100 m-auto">
+        <h1 class="h3 mb-3 fw-normal">kubetrainer</h1>
+        <table  class="w-100">
+          <tr>
+            <td class="w-50">
+              <a href="/update-liveness" class="w-100 btn btn-lg btn-primary">
+                if livenessState {
+                  <span class="badge bg-success">Liveness OK</span>
+                } else {
+                  <span class="badge bg-danger">Liveness KO</span>
+                }
+              </a>
+            </td>
+            <td class="w-50">
+              <a href="/update-readiness" class="w-100 btn btn-lg btn-primary">
+                if readinessState {
+                  <span class="badge bg-success">Readiness OK</span>
+                } else {
+                  <span class="badge bg-danger">Readiness KO</span>
+                }
+              </a>
+            </td>
+          </tr>
+        </table>
+        <!-- <button class="w-100 btn btn-lg btn-primary" type="submit">overload</button>-->
+      </main>
+    </div>
+    </main>
+    
+    @BootstrapBundle()
+    @ErrorJS(ErrorMsg!="")
+  </body>
+</html>
+}
