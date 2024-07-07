@@ -12,7 +12,8 @@
     ],
     "scripts": {
       "snapshot": [
-        "task snapshot"
+        "task snapshot",
+        "task release"
       ]
     }
   }
