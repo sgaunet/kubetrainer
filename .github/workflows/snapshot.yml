@@ -20,6 +20,9 @@ jobs:
         name: Set up Go
         uses: actions/setup-go@v5
 
+      - name: Install devbox
+        uses: jetify-com/devbox-install-action@v0.9.0
+
       -
         # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
@@ -36,6 +39,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install prerequisites
+        shell: /usr/bin/bash {0}
+        run: |
+          devbox install
       -
         name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
