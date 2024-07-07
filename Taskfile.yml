@@ -28,3 +28,26 @@ tasks:
     desc: "Delete a kind cluster"
     cmds:
       - kind delete cluster
+
+  run:
+    desc: "Build the application"
+    cmds:
+      - go generate ./...
+      - echo "http://localhost:3000"
+      - go run ./cmd/*.go
+
+  doc:
+    desc: "Start godoc server"
+    cmds:
+      - echo http://localhost:6060 
+      - godoc -http=:6060
+
+  snapshot:
+    desc: "Create a snapshot release"
+    cmds:
+      - GITLAB_TOKEN="" goreleaser --clean --snapshot
+    
+  release:
+    desc: "Create a release"
+    cmds:
+      - GITLAB_TOKEN="" goreleaser --clean

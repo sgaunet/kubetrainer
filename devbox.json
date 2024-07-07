@@ -2,15 +2,20 @@
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.12.0/.schema/devbox.schema.json",
   "packages": [
     "sqlc@1.26.0",
-    "templ@0.2.707"
+    "templ@0.2.707",
+    "goreleaser@latest",
+    "go-task@latest"
   ],
   "shell": {
     "init_hook": [
       "echo 'Welcome to devbox!' > /dev/null"
     ],
     "scripts": {
-      "test": [
-        "echo \"Error: no test specified\" && exit 1"
+      "snapshot": [
+        "task snapshot"
+      ],
+      "release": [
+        "task release"
       ]
     }
   }
