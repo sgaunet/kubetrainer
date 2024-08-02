@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-go@v5
 
       - name: Install devbox
-        uses: jetify-com/devbox-install-action@v0.9.0
+        uses: jetify-com/devbox-install-action@v0.11.0
 
       -
         # Add support for more platforms with QEMU (optional)
