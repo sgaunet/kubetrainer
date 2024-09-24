@@ -1,3 +1,7 @@
+[![GitHub release](https://img.shields.io/github/release/sgaunet/kubetrainer.svg)](https://github.com/sgaunet/kubetrainer/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/sgaunet/kubetrainer)](https://goreportcard.com/report/github.com/sgaunet/kubetrainer)
+![GitHub Downloads](https://img.shields.io/github/downloads/sgaunet/kubetrainer/total)
+
 This project will try to guide you to get a local kubernetes environment in order to:
 
 * learn
