@@ -3,11 +3,10 @@ module github.com/sgaunet/kubetrainer
 go 1.22.1
 
 require (
-	github.com/a-h/templ v0.2.731
 	github.com/amacneil/dbmate/v2 v2.17.0
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/lib/pq v1.10.9
-	github.com/redis/go-redis/v9 v9.5.3
+	github.com/redis/go-redis/v9 v9.6.1
 	github.com/sgaunet/dsn/v2 v2.3.0
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.31.0
