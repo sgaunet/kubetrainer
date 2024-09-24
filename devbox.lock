@@ -145,51 +145,51 @@
         }
       }
     },
-    "templ@0.2.707": {
-      "last_modified": "2024-06-12T20:55:33Z",
-      "resolved": "github:NixOS/nixpkgs/a9858885e197f984d92d7fe64e9fff6b2e488d40#templ",
+    "templ@0.2.778": {
+      "last_modified": "2024-09-10T15:01:03Z",
+      "resolved": "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#templ",
       "source": "devbox-search",
-      "version": "0.2.707",
+      "version": "0.2.778",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/i6lgniyx8dsxwxwsnvn9smjdjgq7ymdc-templ-0.2.707",
+              "path": "/nix/store/n3yqslisz9v81k4w4vhci1v2bl1sqf9s-templ-0.2.778",
               "default": true
             }
           ],
-          "store_path": "/nix/store/i6lgniyx8dsxwxwsnvn9smjdjgq7ymdc-templ-0.2.707"
+          "store_path": "/nix/store/n3yqslisz9v81k4w4vhci1v2bl1sqf9s-templ-0.2.778"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/499cp4hcc60jbr2v8hpaw39l8ji92hk6-templ-0.2.707",
+              "path": "/nix/store/i4xjiw0vc25qpr3g01q0x401351w28hr-templ-0.2.778",
               "default": true
             }
           ],
-          "store_path": "/nix/store/499cp4hcc60jbr2v8hpaw39l8ji92hk6-templ-0.2.707"
+          "store_path": "/nix/store/i4xjiw0vc25qpr3g01q0x401351w28hr-templ-0.2.778"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/6203vcz4g893cfpz7n6nadg1xs9ijhs6-templ-0.2.707",
+              "path": "/nix/store/77w522agb5fgsr36jkifcccr9x4xwkf9-templ-0.2.778",
               "default": true
             }
           ],
-          "store_path": "/nix/store/6203vcz4g893cfpz7n6nadg1xs9ijhs6-templ-0.2.707"
+          "store_path": "/nix/store/77w522agb5fgsr36jkifcccr9x4xwkf9-templ-0.2.778"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/jmi9ahlyfyj09karnag91lzmvqvks0ys-templ-0.2.707",
+              "path": "/nix/store/1g5ji5930j03cycpcjy12z6lr24l9c65-templ-0.2.778",
               "default": true
             }
           ],
-          "store_path": "/nix/store/jmi9ahlyfyj09karnag91lzmvqvks0ys-templ-0.2.707"
+          "store_path": "/nix/store/1g5ji5930j03cycpcjy12z6lr24l9c65-templ-0.2.778"
         }
       }
     }
