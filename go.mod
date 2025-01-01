@@ -4,7 +4,7 @@ go 1.22.1
 
 require (
 	github.com/amacneil/dbmate/v2 v2.17.0
-	github.com/go-chi/chi/v5 v5.1.0
+	github.com/go-chi/chi/v5 v5.2.0
 	github.com/lib/pq v1.10.9
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/sgaunet/dsn/v2 v2.3.0
