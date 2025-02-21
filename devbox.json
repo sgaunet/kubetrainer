@@ -3,8 +3,7 @@
   "packages": [
     "sqlc@1.26.0",
     "goreleaser@latest",
-    "go-task@latest",
-    "templ@0.3.833"
+    "go-task@latest"
   ],
   "shell": {
     "init_hook": [

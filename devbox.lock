@@ -144,54 +144,6 @@
           "store_path": "/nix/store/3ax2idp45jcx3svnrygz4yxdaqddhdgl-sqlc-1.26.0"
         }
       }
-    },
-    "templ@0.3.833": {
-      "last_modified": "2025-02-07T11:26:36Z",
-      "resolved": "github:NixOS/nixpkgs/d98abf5cf5914e5e4e9d57205e3af55ca90ffc1d#templ",
-      "source": "devbox-search",
-      "version": "0.3.833",
-      "systems": {
-        "aarch64-darwin": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/44fcrndxghqjnayb2g0f9m9mn679908d-templ-0.3.833",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/44fcrndxghqjnayb2g0f9m9mn679908d-templ-0.3.833"
-        },
-        "aarch64-linux": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/cc5r1cj29lvjkzrkngfa3n5bn4ypf1cp-templ-0.3.833",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/cc5r1cj29lvjkzrkngfa3n5bn4ypf1cp-templ-0.3.833"
-        },
-        "x86_64-darwin": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/xm1cr5nfpmmz7i9871azk02rnxdgajm6-templ-0.3.833",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/xm1cr5nfpmmz7i9871azk02rnxdgajm6-templ-0.3.833"
-        },
-        "x86_64-linux": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/4r7j4z9jy39abrimj8191id222qbning-templ-0.3.833",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/4r7j4z9jy39abrimj8191id222qbning-templ-0.3.833"
-        }
-      }
     }
   }
 }

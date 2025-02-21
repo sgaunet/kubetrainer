@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-//go:generate templ generate
+//go:generate go tool github.com/a-h/templ/cmd/templ generate
 
 const BootStrapRootDir = "bootstrap-5.2.3-dist"
 
