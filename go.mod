@@ -1,9 +1,11 @@
 module github.com/sgaunet/kubetrainer
 
-go 1.22.1
-toolchain go1.22.11
+go 1.23
+
+toolchain go1.23.4
 
 require (
+	github.com/a-h/templ v0.3.833
 	github.com/amacneil/dbmate/v2 v2.25.0
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/lib/pq v1.10.9

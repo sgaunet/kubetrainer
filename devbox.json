@@ -2,9 +2,9 @@
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.12.0/.schema/devbox.schema.json",
   "packages": [
     "sqlc@1.26.0",
-    "templ@0.2.778",
     "goreleaser@latest",
-    "go-task@latest"
+    "go-task@latest",
+    "templ@0.3.833"
   ],
   "shell": {
     "init_hook": [
