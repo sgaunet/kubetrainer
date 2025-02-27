@@ -47,3 +47,9 @@ $ curl localhost:8080
 ```
 
 You should see the default nginx welcome page.
+
+Now, delete the pod:
+
+```bash
+kubectl delete -f pod.yaml
+```
