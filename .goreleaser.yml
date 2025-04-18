@@ -27,6 +27,9 @@ archives:
   - name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     formats: ['binary']
 
+snapshot:
+  version_template: "latest"
+
 checksum:
   name_template: 'checksums.txt'
 
