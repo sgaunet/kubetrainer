@@ -18,7 +18,10 @@ jobs:
           fetch-depth: 0
       - name: Install devbox
         uses: jetify-com/devbox-install-action@v0.12.0
-
+        with:
+          enable-cache: true
+          devbox-version: 0.14.0
+  
       -
         # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
