@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/caarlos0/env/v11"
 	"gopkg.in/yaml.v2"
 )
 
@@ -35,6 +36,16 @@ func LoadConfigFromFile(filename string) (*Config, error) {
 		return nil, fmt.Errorf("error unmarshalling YAML file: %w", err)
 	}
 	return &yamlConfig, err
+}
+
+// LoadConfigFromEnv returns a new Config struct from the environment variables
+func LoadConfigFromEnv() (*Config, error) {
+	var cfg Config
+	err := env.Parse(&cfg)
+	if err != nil {
+		return nil, err
+	}
+	return &cfg, nil
 }
 
 func (cfg *Config) IsDBConfig() bool {
