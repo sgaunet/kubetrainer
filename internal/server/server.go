@@ -53,7 +53,7 @@ func NewWebServer(opts ...WebServerOption) *WebServer {
 	}
 
 	// initialize html and json controllers
-	w.htmlController = htmlhandlers.NewController(w.db)
+	w.htmlController = htmlhandlers.NewController(w.db, w.rdb)
 	// Setup routes
 	w.PublicRoutes()
 

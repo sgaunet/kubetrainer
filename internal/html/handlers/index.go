@@ -8,10 +8,5 @@ import (
 )
 
 func (h *Controller) Index(w http.ResponseWriter, r *http.Request) {
-	var postgresState bool
-	if h.db != nil && h.db.GetDB() != nil {
-		err := h.db.GetDB().Ping()
-		postgresState = err == nil
-	}
-	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), postgresState, "").Render(context.Background(), w)
+	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), "").Render(context.Background(), w)
 }
