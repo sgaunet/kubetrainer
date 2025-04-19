@@ -12,6 +12,7 @@ func (w *WebServer) PublicRoutes() {
 	w.router.Get("/liveness", w.htmlController.Liveness)
 	w.router.Get("/update-liveness", w.htmlController.ChangeLivenessState)
 	w.router.Get("/update-readiness", w.htmlController.ChangeReadinessState)
+	w.router.Get("/publish-time", w.htmlController.PublishTime)
 }
 
 // PrintMemUsage outputs the current, total and OS memory being used. As well as the number

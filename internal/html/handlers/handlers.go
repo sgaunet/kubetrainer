@@ -4,10 +4,12 @@ import (
 	"context"
 	"net/http"
 	"sync/atomic"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/sgaunet/kubetrainer/internal/database"
 	"github.com/sgaunet/kubetrainer/internal/html/views"
+	"github.com/sgaunet/kubetrainer/internal/producer"
 )
 
 type Controller struct {
@@ -15,13 +17,15 @@ type Controller struct {
 	readinessState atomic.Bool
 	db             database.Database
 	rdb            *redis.Client
+	producer       *producer.Producer
 }
 
 // NewController creates a new controller
-func NewController(db database.Database, rdb *redis.Client) *Controller {
+func NewController(db database.Database, rdb *redis.Client, streamName string) *Controller {
 	c := &Controller{
-		db:  db,
-		rdb: rdb,
+		db:       db,
+		rdb:      rdb,
+		producer: producer.NewProducer(rdb, streamName),
 	}
 	c.livenessState.Store(true)
 	c.readinessState.Store(true)
@@ -78,4 +82,15 @@ func (h *Controller) IsRedisConnected() bool {
 	}
 	err := h.rdb.Ping(context.Background()).Err()
 	return err == nil
+}
+
+// PublishTime publishes current time to Redis stream
+func (h *Controller) PublishTime(w http.ResponseWriter, r *http.Request) {
+	currentTime := time.Now().Format(time.RFC3339)
+	err := h.producer.Publish(r.Context(), currentTime)
+	if err != nil {
+		views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), err.Error()).Render(context.Background(), w)
+		return
+	}
+	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), "").Render(context.Background(), w)
 }

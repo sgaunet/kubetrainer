@@ -28,3 +28,15 @@ services:
     - REDIS_STREAMNAME=kubetrainer1
     - REDIS_STREAMGROUP=kubetrainer1
     - REDIS_MAXSTREAMLENGTH=1000
+
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    ports:
+      - "8001:5540"
+    volumes:
+      - redisinsight:/db
+    depends_on:
+      - redis-server
+
+volumes:
+  redisinsight:

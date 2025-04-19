@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -18,6 +19,7 @@ type WebServer struct {
 	htmlController *htmlhandlers.Controller
 	db             database.Database
 	rdb            *redis.Client
+	streamName     string
 }
 
 type WebServerOption func(*WebServer)
@@ -34,9 +36,17 @@ func WithDB(db database.Database) WebServerOption {
 	}
 }
 
+func WithStreamName(streamName string) WebServerOption {
+	return func(w *WebServer) {
+		w.streamName = streamName
+	}
+}
+
 func NewWebServer(opts ...WebServerOption) *WebServer {
 	// Create a new WebServer instance
-	w := &WebServer{}
+	w := &WebServer{
+		streamName: os.Getenv("REDIS_STREAMNAME"), // Default stream name from env
+	}
 	// Create middlewares, router, and server
 	w.router = chi.NewRouter()
 	// add common middlewares
@@ -53,7 +63,7 @@ func NewWebServer(opts ...WebServerOption) *WebServer {
 	}
 
 	// initialize html and json controllers
-	w.htmlController = htmlhandlers.NewController(w.db, w.rdb)
+	w.htmlController = htmlhandlers.NewController(w.db, w.rdb, w.streamName)
 	// Setup routes
 	w.PublicRoutes()
 
