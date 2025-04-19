@@ -5,17 +5,21 @@ import (
 	"net/http"
 	"sync/atomic"
 
+	"github.com/sgaunet/kubetrainer/internal/database"
 	"github.com/sgaunet/kubetrainer/internal/html/views"
 )
 
 type Controller struct {
 	livenessState  atomic.Bool
 	readinessState atomic.Bool
+	db             database.Database
 }
 
 // NewController creates a new controller
-func NewController() *Controller {
-	c := &Controller{}
+func NewController(db database.Database) *Controller {
+	c := &Controller{
+		db: db,
+	}
 	c.livenessState.Store(true)
 	c.readinessState.Store(true)
 	return c
@@ -34,12 +38,12 @@ func (h *Controller) UpdateReadinessState() {
 
 func (h *Controller) ChangeLivenessState(w http.ResponseWriter, r *http.Request) {
 	h.UpdateLivenessState()
-	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), "").Render(context.Background(), w)
+	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), "").Render(context.Background(), w)
 }
 
 func (h *Controller) ChangeReadinessState(w http.ResponseWriter, r *http.Request) {
 	h.UpdateReadinessState()
-	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), "").Render(context.Background(), w)
+	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), "").Render(context.Background(), w)
 }
 
 func (h *Controller) Readiness(w http.ResponseWriter, r *http.Request) {

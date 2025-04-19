@@ -4,7 +4,7 @@ import (
   // "github.com/sgaunet/kubetrainer/pkg/config"
 )
 
-templ IndexPage(livenessState bool,readinessState bool,ErrorMsg string) {
+templ IndexPage(livenessState bool,readinessState bool,postgresState bool,ErrorMsg string) {
 <!doctype html>
 <html lang="en">
   @Head()
@@ -35,6 +35,17 @@ templ IndexPage(livenessState bool,readinessState bool,ErrorMsg string) {
                   <span class="badge bg-danger">Readiness KO</span>
                 }
               </a>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2" class="w-100 text-center pt-3">
+              if postgresState {
+                <span class="badge bg-success">PostgreSQL Connected</span>
+              } else {
+                <span class="badge bg-danger">PostgreSQL Disconnected</span>
+              }
+            </td>
+            <td>
             </td>
           </tr>
         </table>

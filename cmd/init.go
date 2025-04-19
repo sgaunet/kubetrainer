@@ -15,11 +15,11 @@ import (
 func initDB(cfgApp *config.Config) (*database.Postgres, error) {
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(30*time.Second))
 	defer cancel()
-	err := database.WaitForDB(ctx, cfgApp.DbDSN)
+	err := database.WaitForDB(ctx, cfgApp.DBCfg.DbDSN)
 	if err != nil {
 		return nil, err
 	}
-	pg, err := database.NewPostgres(cfgApp.DbDSN)
+	pg, err := database.NewPostgres(cfgApp.DBCfg.DbDSN)
 	if err != nil {
 		return nil, err
 	}

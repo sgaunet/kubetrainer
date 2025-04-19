@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"database/sql"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,41 +13,52 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/sgaunet/kubetrainer/internal/server"
+	"github.com/sgaunet/kubetrainer/pkg/config"
 )
 
 func main() {
 	var (
-		err error
-		// cfg config.Config
-		db *sql.DB
-		// configurationFileName string
+		err                   error
+		cfg                   *config.Config
+		configurationFileName string
+		wOpts                 []server.WebServerOption
 	)
 	// debug.SetMemoryLimit(1024 * 1024 * 1024 * 2)
-	// flag.StringVar(&configurationFileName, "f", "", "Configuration file")
-	// flag.Parse()
+	flag.StringVar(&configurationFileName, "f", "", "Configuration file")
+	flag.Parse()
 
-	// if len(configurationFileName) == 0 {
-	// 	fmt.Fprintf(os.Stderr, "no configuration file provided\n")
-	// 	os.Exit(1)
-	// }
-	// cfg, err = config.LoadConfigFromFile(configurationFileName)
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "cannot load configuration: %s\n", err.Error())
-	// 	os.Exit(1)
-	// }
-
-	// pg, err := initDB(&cfg)
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "error during database initialization: %s\n", err.Error())
-	// 	os.Exit(1)
-	// }
-
-	// w, err := server.NewWebServer(cfg, pg.DB)
-	w, err := server.NewWebServer(db)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error during webserver initialization: %s\n", err.Error())
-		os.Exit(1)
+	if len(configurationFileName) == 0 {
+		cfg, err = config.LoadConfigFromEnv()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "cannot load configuration: %s\n", err.Error())
+			os.Exit(1)
+		}
+	} else {
+		cfg, err = config.LoadConfigFromFile(configurationFileName)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "cannot load configuration: %s\n", err.Error())
+			os.Exit(1)
+		}
 	}
+
+	if cfg.IsRedisConfig() {
+		redisClient, err := initRedisConnection(cfg.RedisCfg.RedisDSN)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error during redis initialization: %s\n", err.Error())
+			os.Exit(1)
+		}
+		wOpts = append(wOpts, server.WithRedisClient(redisClient))
+	}
+	if cfg.IsDBConfig() {
+		pg, err := initDB(cfg)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error during database initialization: %s\n", err.Error())
+			os.Exit(1)
+		}
+		wOpts = append(wOpts, server.WithDB(pg))
+	}
+	// Initialize the web server with the options
+	w := server.NewWebServer(wOpts...)
 
 	// Create a channel to listen for OS signals
 	stopChan := make(chan os.Signal, 5)
