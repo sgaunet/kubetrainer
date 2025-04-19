@@ -29,6 +29,7 @@ tasks:
     cmds:
       - kind delete cluster
 
+  # used by devbox
   run:
     desc: "Build the application"
     cmds:
@@ -42,11 +43,13 @@ tasks:
       - echo http://localhost:6060 
       - godoc -http=:6060
 
+  # used by devbox
   snapshot:
     desc: "Create a snapshot release"
     cmds:
       - GITLAB_TOKEN="" goreleaser --clean --snapshot
     
+  # used by devbox
   release:
     desc: "Create a release"
     cmds:
