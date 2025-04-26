@@ -29,6 +29,18 @@ services:
     - REDIS_STREAMGROUP=kubetrainer1
     - REDIS_MAXSTREAMLENGTH=1000
 
+  kubetrainer-consumer:
+    image: ghcr.io/sgaunet/kubetrainer:latest-amd64
+    stop_grace_period: 1m
+    command: ["kubetrainer", "-consumer"]
+    environment:
+    - REDIS_DSN=redis://redis-server:6379/0
+    - REDIS_STREAMNAME=kubetrainer1
+    - REDIS_STREAMGROUP=kubetrainer1
+    - REDIS_MAXSTREAMLENGTH=1000
+    depends_on:
+    - redis-server
+
   redisinsight:
     image: redislabs/redisinsight:latest
     ports:
