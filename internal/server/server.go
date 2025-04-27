@@ -14,12 +14,13 @@ import (
 )
 
 type WebServer struct {
-	srv            *http.Server
-	router         *chi.Mux
-	htmlController *htmlhandlers.Controller
-	db             database.Database
-	rdb            *redis.Client
-	streamName     string
+	srv              *http.Server
+	router           *chi.Mux
+	htmlController   *htmlhandlers.Controller
+	db               database.Database
+	rdb              *redis.Client
+	streamName       string
+	consumerGroupName string
 }
 
 type WebServerOption func(*WebServer)
@@ -42,10 +43,17 @@ func WithStreamName(streamName string) WebServerOption {
 	}
 }
 
+func WithConsumerGroupName(consumerGroupName string) WebServerOption {
+	return func(w *WebServer) {
+		w.consumerGroupName = consumerGroupName
+	}
+}
+
 func NewWebServer(opts ...WebServerOption) *WebServer {
 	// Create a new WebServer instance
 	w := &WebServer{
-		streamName: os.Getenv("REDIS_STREAMNAME"), // Default stream name from env
+		streamName:       os.Getenv("REDIS_STREAMNAME"),       // Default stream name from env
+		consumerGroupName: os.Getenv("REDIS_STREAMGROUP"),    // Default consumer group name from env
 	}
 	// Create middlewares, router, and server
 	w.router = chi.NewRouter()
@@ -63,7 +71,7 @@ func NewWebServer(opts ...WebServerOption) *WebServer {
 	}
 
 	// initialize html and json controllers
-	w.htmlController = htmlhandlers.NewController(w.db, w.rdb, w.streamName)
+	w.htmlController = htmlhandlers.NewController(w.db, w.rdb, w.streamName, w.consumerGroupName)
 	// Setup routes
 	w.PublicRoutes()
 

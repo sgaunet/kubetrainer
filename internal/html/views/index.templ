@@ -2,9 +2,10 @@ package views
 
 import (
   // "github.com/sgaunet/kubetrainer/pkg/config"
+  "fmt"
 )
 
-templ IndexPage(livenessState bool,readinessState bool,postgresState bool, redisState bool,ErrorMsg string) {
+templ IndexPage(livenessState bool,readinessState bool,postgresState bool, redisState bool, pendingMessages int64, ErrorMsg string) {
 <!doctype html>
 <html lang="en">
   @Head()
@@ -55,13 +56,17 @@ templ IndexPage(livenessState bool,readinessState bool,postgresState bool, redis
           </tr>
           <tr>
             <td colspan="2" class="w-100 text-center pt-3">
-              <a href="/publish-time" class="w-100 btn btn-lg btn-primary">
-                Publish Current Time
-              </a>
+              <div class="d-flex flex-column align-items-center gap-2">
+                <a href="/publish-time" class="w-100 btn btn-lg btn-primary">
+                  Publish Current Time
+                </a>
+                <div class="badge bg-info fs-6">
+                  Pending Messages: { fmt.Sprint(pendingMessages) }
+                </div>
+              </div>
             </td>
           </tr>
         </table>
-        <!-- <button class="w-100 btn btn-lg btn-primary" type="submit">overload</button>-->
       </main>
     </div>
     </main>

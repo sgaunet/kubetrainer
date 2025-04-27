@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"sync/atomic"
 	"time"
@@ -13,19 +14,21 @@ import (
 )
 
 type Controller struct {
-	livenessState  atomic.Bool
-	readinessState atomic.Bool
-	db             database.Database
-	rdb            *redis.Client
-	producer       *producer.Producer
+	livenessState     atomic.Bool
+	readinessState    atomic.Bool
+	db                database.Database
+	rdb               *redis.Client
+	producer          *producer.Producer
+	consumerGroupName string
 }
 
 // NewController creates a new controller
-func NewController(db database.Database, rdb *redis.Client, streamName string) *Controller {
+func NewController(db database.Database, rdb *redis.Client, streamName string, consumerGroupName string) *Controller {
 	c := &Controller{
-		db:       db,
-		rdb:      rdb,
-		producer: producer.NewProducer(rdb, streamName),
+		db:                db,
+		rdb:               rdb,
+		producer:          producer.NewProducer(rdb, streamName),
+		consumerGroupName: consumerGroupName,
 	}
 	c.livenessState.Store(true)
 	c.readinessState.Store(true)
@@ -43,14 +46,25 @@ func (h *Controller) UpdateReadinessState() {
 	h.readinessState.Store(!state)
 }
 
+func (h *Controller) GetPendingMessagesCount(ctx context.Context) int64 {
+	count, err := h.producer.GetPendingMessagesCount(ctx, h.consumerGroupName)
+	if err != nil {
+		fmt.Println("Error getting pending messages count:", err)
+		return 0
+	}
+	return count
+}
+
 func (h *Controller) ChangeLivenessState(w http.ResponseWriter, r *http.Request) {
 	h.UpdateLivenessState()
-	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), "").Render(context.Background(), w)
+	count := h.GetPendingMessagesCount(r.Context())
+	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w)
 }
 
 func (h *Controller) ChangeReadinessState(w http.ResponseWriter, r *http.Request) {
 	h.UpdateReadinessState()
-	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), "").Render(context.Background(), w)
+	count := h.GetPendingMessagesCount(r.Context())
+	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w)
 }
 
 func (h *Controller) Readiness(w http.ResponseWriter, r *http.Request) {
@@ -89,8 +103,10 @@ func (h *Controller) PublishTime(w http.ResponseWriter, r *http.Request) {
 	currentTime := time.Now().Format(time.RFC3339)
 	err := h.producer.Publish(r.Context(), currentTime)
 	if err != nil {
-		views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), err.Error()).Render(context.Background(), w)
+		count := h.GetPendingMessagesCount(r.Context())
+		views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), count, err.Error()).Render(r.Context(), w)
 		return
 	}
-	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), "").Render(context.Background(), w)
+	count := h.GetPendingMessagesCount(r.Context())
+	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w)
 }
