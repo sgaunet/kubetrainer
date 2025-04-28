@@ -3,10 +3,12 @@ module github.com/sgaunet/kubetrainer
 go 1.24
 
 require (
+	github.com/a-h/templ v0.3.833
 	github.com/amacneil/dbmate/v2 v2.26.0
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/lib/pq v1.10.9
 	github.com/redis/go-redis/v9 v9.7.3
+	github.com/rs/xid v1.6.0
 	github.com/sgaunet/dsn/v2 v2.3.0
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.36.0
@@ -21,9 +23,9 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/PuerkitoBio/goquery v1.10.1 // indirect
 	github.com/a-h/parse v0.0.0-20250122154542-74294addb73e // indirect
-	github.com/a-h/templ v0.3.833 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
+	github.com/caarlos0/env/v11 v11.3.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cli/browser v1.3.0 // indirect

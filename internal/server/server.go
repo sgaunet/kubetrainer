@@ -2,24 +2,59 @@ package server
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/redis/go-redis/v9"
+	"github.com/sgaunet/kubetrainer/internal/database"
 	htmlhandlers "github.com/sgaunet/kubetrainer/internal/html/handlers"
 )
 
 type WebServer struct {
-	srv            *http.Server
-	router         *chi.Mux
-	htmlController *htmlhandlers.Controller
+	srv              *http.Server
+	router           *chi.Mux
+	htmlController   *htmlhandlers.Controller
+	db               database.Database
+	rdb              *redis.Client
+	streamName       string
+	consumerGroupName string
 }
 
-func NewWebServer(db *sql.DB) (*WebServer, error) {
+type WebServerOption func(*WebServer)
+
+func WithRedisClient(rdb *redis.Client) WebServerOption {
+	return func(w *WebServer) {
+		w.rdb = rdb
+	}
+}
+
+func WithDB(db database.Database) WebServerOption {
+	return func(w *WebServer) {
+		w.db = db
+	}
+}
+
+func WithStreamName(streamName string) WebServerOption {
+	return func(w *WebServer) {
+		w.streamName = streamName
+	}
+}
+
+func WithConsumerGroupName(consumerGroupName string) WebServerOption {
+	return func(w *WebServer) {
+		w.consumerGroupName = consumerGroupName
+	}
+}
+
+func NewWebServer(opts ...WebServerOption) *WebServer {
 	// Create a new WebServer instance
-	w := &WebServer{}
+	w := &WebServer{
+		streamName:       os.Getenv("REDIS_STREAMNAME"),       // Default stream name from env
+		consumerGroupName: os.Getenv("REDIS_STREAMGROUP"),    // Default consumer group name from env
+	}
 	// Create middlewares, router, and server
 	w.router = chi.NewRouter()
 	// add common middlewares
@@ -29,11 +64,18 @@ func NewWebServer(db *sql.DB) (*WebServer, error) {
 		Addr:    fmt.Sprintf(":%d", 3000),
 		Handler: w.router,
 	}
+
+	// Setup options
+	for _, opt := range opts {
+		opt(w)
+	}
+
 	// initialize html and json controllers
-	w.htmlController = htmlhandlers.NewController()
+	w.htmlController = htmlhandlers.NewController(w.db, w.rdb, w.streamName, w.consumerGroupName)
 	// Setup routes
 	w.PublicRoutes()
-	return w, nil
+
+	return w
 }
 
 func (w *WebServer) Start() error {

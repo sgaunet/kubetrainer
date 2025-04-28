@@ -2,9 +2,10 @@ package views
 
 import (
   // "github.com/sgaunet/kubetrainer/pkg/config"
+  "fmt"
 )
 
-templ IndexPage(livenessState bool,readinessState bool,ErrorMsg string) {
+templ IndexPage(livenessState bool,readinessState bool,postgresState bool, redisState bool, pendingMessages int64, ErrorMsg string) {
 <!doctype html>
 <html lang="en">
   @Head()
@@ -15,7 +16,7 @@ templ IndexPage(livenessState bool,readinessState bool,ErrorMsg string) {
       @ModalError(ErrorMsg)
 
       <main class="form-signin w-100 m-auto">
-        <h1 class="h3 mb-3 fw-normal">kubetrainer</h1>
+        <h1 class="h3 mb-3 fw-normal"><a href="/">kubetrainer</a></h1>
         <table  class="w-100">
           <tr>
             <td class="w-50">
@@ -37,8 +38,53 @@ templ IndexPage(livenessState bool,readinessState bool,ErrorMsg string) {
               </a>
             </td>
           </tr>
+          <tr>
+            <td class="w-50 text-center">
+              if postgresState {
+                <span class="badge bg-success">PostgreSQL Connected</span>
+              } else {
+                <span class="badge bg-danger">PostgreSQL Disconnected</span>
+              }
+            </td>
+            <td class="w-50 text-center">
+              if redisState {
+                <span class="badge bg-success">Redis Connected</span>
+              } else {
+                <span class="badge bg-danger">Redis Disconnected</span>
+              }
+            </td>
+          </tr>
+          <tr>
+            <td class="w-50 text-center">
+              // <div class="d-flex flex-column align-items-center gap-2">
+                <form action="/publish-time" method="POST" class="w-100">
+                  <button type="submit" class="w-100 btn btn-lg btn-primary">
+                    Publish Current Time
+                  </button>
+                </form>
+              // </div>
+            </td>
+            <td class="w-50">
+              <form action="/publish-time/100" method="POST" class="w-100">
+                <button type="submit" class="w-100 btn btn-lg btn-primary">
+                  Publish 100
+                </button>
+              </form>
+            </td>
+          </tr>
+          <tr>
+            <td class="w-50">
+              <div class="d-flex flex-column align-items-center gap-2">
+                <div class="badge bg-info fs-6">
+                  Pending Messages: { fmt.Sprint(pendingMessages) }
+                </div>
+              </div>
+            </td>
+            <td class="w-50">
+              
+            </td>
+          </tr>
         </table>
-        <!-- <button class="w-100 btn btn-lg btn-primary" type="submit">overload</button>-->
       </main>
     </div>
     </main>

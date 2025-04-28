@@ -1,0 +1,61 @@
+services:
+  redis-server:
+    image: redis:7.2.4-alpine
+    ports:
+    - 6379:6379
+    stop_grace_period: 1m
+    environment:
+    - ALLOW_EMPTY_PASSWORD=yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    # command: ["redis-server", "--requirepass", "changeme"]     # REDISDSN=redis://redis:changeme@redis-server:6379/0
+
+  postgres-server:
+    image: postgres:16.3-alpine
+    ports:
+    - 5432:5432
+    stop_grace_period: 1m
+    environment:
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=password
+
+  kubetrainer:
+    image: ghcr.io/sgaunet/kubetrainer:latest-amd64
+    ports:
+    - 3000:3000
+    stop_grace_period: 1m
+    environment:
+    - DB_DSN=postgres://postgres:password@postgres-server:5432/postgres?sslmode=disable
+    - REDIS_DSN=redis://redis-server:6379/0
+    - REDIS_STREAMNAME=kubetrainer1
+    - REDIS_STREAMGROUP=kubetrainer1
+    - REDIS_MAXSTREAMLENGTH=1000
+    depends_on:
+    - redis-server
+
+  kubetrainer-consumer:
+    image: ghcr.io/sgaunet/kubetrainer:latest-amd64
+    stop_grace_period: 1m
+    command: ["kubetrainer", "-consumer"]
+    environment:
+    - REDIS_DSN=redis://redis-server:6379/0
+    - REDIS_STREAMNAME=kubetrainer1
+    - REDIS_STREAMGROUP=kubetrainer1
+    - REDIS_MAXSTREAMLENGTH=1000
+    depends_on:
+    - redis-server
+
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    ports:
+      - "8001:5540"
+    volumes:
+      - redisinsight:/db
+    depends_on:
+      - redis-server
+
+volumes:
+  redisinsight:

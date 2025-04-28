@@ -17,6 +17,12 @@ import (
 //go:embed db/migrations/*.sql
 var fs embed.FS
 
+type Database interface {
+	IsConnected() bool
+	GetDB() *sql.DB
+	Close() error
+}
+
 type Postgres struct {
 	DB               *sql.DB
 	pgDataSourceName dsn.DSN
@@ -28,10 +34,6 @@ func NewPostgres(pgdsn string) (*Postgres, error) {
 		return nil, err
 	}
 	p := &Postgres{pgDataSourceName: d}
-	// err = p.InitDB()
-	// if err != nil {
-	// 	return nil, err
-	// }
 	fmt.Println("Connecting to database...", d.GetPostgresUri())
 	db, err := sql.Open("postgres", d.GetPostgresUri())
 	if err != nil {
@@ -86,7 +88,6 @@ func (p *Postgres) InitDB() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(u.String())
 	db := dbmate.New(u)
 	db.FS = fs
 	db.AutoDumpSchema = false
@@ -115,6 +116,15 @@ func (p *Postgres) Close() error {
 
 func (p *Postgres) GetDB() *sql.DB {
 	return p.DB
+}
+
+func (p *Postgres) IsConnected() bool {
+	// Check if the database connection is still valid
+	if p.DB == nil {
+		return false
+	}
+	err := p.DB.Ping()
+	return err == nil
 }
 
 func genDbmateUri(d dsn.DSN) string {
