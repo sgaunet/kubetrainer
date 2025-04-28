@@ -25,7 +25,7 @@ func NewConsumer(redisClient *redis.Client, streamName string, consumerGroupName
 }
 
 func (c *Consumer) InitConsumer(ctx context.Context) error {
-	err := c.rdb.XGroupCreate(ctx, c.streamName, c.consumerGroupName, "0").Err()
+	err := c.rdb.XGroupCreateMkStream(ctx, c.streamName, c.consumerGroupName, "0").Err()
 	if err != nil && !strings.Contains(err.Error(), "BUSYGROUP") {
 		return fmt.Errorf("failed to create consumer group: %w", err)
 	}
