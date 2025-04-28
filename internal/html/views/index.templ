@@ -39,14 +39,14 @@ templ IndexPage(livenessState bool,readinessState bool,postgresState bool, redis
             </td>
           </tr>
           <tr>
-            <td class="w-50">
+            <td class="w-50 text-center">
               if postgresState {
                 <span class="badge bg-success">PostgreSQL Connected</span>
               } else {
                 <span class="badge bg-danger">PostgreSQL Disconnected</span>
               }
             </td>
-            <td class="w-50">
+            <td class="w-50 text-center">
               if redisState {
                 <span class="badge bg-success">Redis Connected</span>
               } else {
@@ -55,17 +55,33 @@ templ IndexPage(livenessState bool,readinessState bool,postgresState bool, redis
             </td>
           </tr>
           <tr>
-            <td colspan="2" class="w-100 text-center pt-3">
-              <div class="d-flex flex-column align-items-center gap-2">
+            <td class="w-50 text-center">
+              // <div class="d-flex flex-column align-items-center gap-2">
                 <form action="/publish-time" method="POST" class="w-100">
                   <button type="submit" class="w-100 btn btn-lg btn-primary">
                     Publish Current Time
                   </button>
                 </form>
+              // </div>
+            </td>
+            <td class="w-50">
+              <form action="/publish-time/100" method="POST" class="w-100">
+                <button type="submit" class="w-100 btn btn-lg btn-primary">
+                  Publish 100
+                </button>
+              </form>
+            </td>
+          </tr>
+          <tr>
+            <td class="w-50">
+              <div class="d-flex flex-column align-items-center gap-2">
                 <div class="badge bg-info fs-6">
                   Pending Messages: { fmt.Sprint(pendingMessages) }
                 </div>
               </div>
+            </td>
+            <td class="w-50">
+              
             </td>
           </tr>
         </table>

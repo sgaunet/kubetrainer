@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync/atomic"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/redis/go-redis/v9"
 	"github.com/sgaunet/kubetrainer/internal/database"
 	"github.com/sgaunet/kubetrainer/internal/html/views"
@@ -100,12 +102,19 @@ func (h *Controller) IsRedisConnected() bool {
 
 // PublishTime publishes current time to Redis stream
 func (h *Controller) PublishTime(w http.ResponseWriter, r *http.Request) {
-	currentTime := time.Now().Format(time.RFC3339)
-	err := h.producer.Publish(r.Context(), currentTime)
-	if err != nil {
-		count := h.GetPendingMessagesCount(r.Context())
-		views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), count, err.Error()).Render(r.Context(), w)
-		return
+	countParamStr := chi.URLParam(r, "count")
+	countParam, _ := strconv.Atoi(countParamStr)
+	if countParam < 1 {
+		countParam = 1
+	}
+	for i := 0; i < int(countParam); i++ {
+		currentTime := time.Now().Format(time.RFC3339)
+		err := h.producer.Publish(r.Context(), currentTime)
+		if err != nil {
+			count := h.GetPendingMessagesCount(r.Context())
+			views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), count, err.Error()).Render(r.Context(), w)
+			return
+		}
 	}
 	count := h.GetPendingMessagesCount(r.Context())
 	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w)
