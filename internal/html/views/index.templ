@@ -57,9 +57,11 @@ templ IndexPage(livenessState bool,readinessState bool,postgresState bool, redis
           <tr>
             <td colspan="2" class="w-100 text-center pt-3">
               <div class="d-flex flex-column align-items-center gap-2">
-                <a href="/publish-time" class="w-100 btn btn-lg btn-primary">
-                  Publish Current Time
-                </a>
+                <form action="/publish-time" method="POST" class="w-100">
+                  <button type="submit" class="w-100 btn btn-lg btn-primary">
+                    Publish Current Time
+                  </button>
+                </form>
                 <div class="badge bg-info fs-6">
                   Pending Messages: { fmt.Sprint(pendingMessages) }
                 </div>
