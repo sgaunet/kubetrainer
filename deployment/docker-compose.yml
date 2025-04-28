@@ -6,6 +6,11 @@ services:
     stop_grace_period: 1m
     environment:
     - ALLOW_EMPTY_PASSWORD=yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     # command: ["redis-server", "--requirepass", "changeme"]     # REDISDSN=redis://redis:changeme@redis-server:6379/0
 
   postgres-server:
@@ -28,6 +33,8 @@ services:
     - REDIS_STREAMNAME=kubetrainer1
     - REDIS_STREAMGROUP=kubetrainer1
     - REDIS_MAXSTREAMLENGTH=1000
+    depends_on:
+    - redis-server
 
   kubetrainer-consumer:
     image: ghcr.io/sgaunet/kubetrainer:latest-amd64
