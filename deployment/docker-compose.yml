@@ -35,6 +35,8 @@ services:
     - REDIS_MAXSTREAMLENGTH=1000
     depends_on:
     - redis-server
+    - postgres-server
+    - kubetrainer-consumer
 
   kubetrainer-consumer:
     image: ghcr.io/sgaunet/kubetrainer:latest-amd64
