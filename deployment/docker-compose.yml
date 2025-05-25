@@ -47,6 +47,7 @@ services:
     - REDIS_STREAMNAME=kubetrainer1
     - REDIS_STREAMGROUP=kubetrainer1
     - REDIS_MAXSTREAMLENGTH=1000
+    - PRODUCER_DATA_SIZE_BYTES=10737418240
     depends_on:
     - redis-server
 

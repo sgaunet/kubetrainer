@@ -17,13 +17,15 @@ type Consumer struct {
 	rdb               *redis.Client
 	streamName        string
 	consumerGroupName string
+	dataSizeBytes    int64
 }
 
-func NewConsumer(redisClient *redis.Client, streamName string, consumerGroupName string) *Consumer {
+func NewConsumer(redisClient *redis.Client, streamName string, consumerGroupName string, dataSizeBytes int64) *Consumer {
 	return &Consumer{
 		rdb:               redisClient,
 		streamName:        streamName,
 		consumerGroupName: consumerGroupName,
+		dataSizeBytes:    dataSizeBytes,
 	}
 }
 
@@ -35,14 +37,17 @@ func (c *Consumer) InitConsumer(ctx context.Context) error {
 	return nil
 }
 
-// Generate1GBOfRandomData writes 1GB of random data to the provided io.Writer.
+// GenerateRandomData writes the specified amount of random data to the provided io.Writer.
 // It returns any error encountered during the write operation.
-func Generate1GBOfRandomData(w io.Writer) error {
-	// 1GB = 1024 * 1024 * 1024 bytes
+func GenerateRandomData(w io.Writer, sizeBytes int64) error {
+	if sizeBytes <= 0 {
+		return fmt.Errorf("size must be greater than 0")
+	}
+
 	const bufferSize = 32 * 1024 // 32KB buffer size
 	buffer := make([]byte, bufferSize)
-	bytesWritten := 0
-	totalBytes := 1024 * 1024 * 1024 // 1GB
+	var bytesWritten int64 = 0
+	totalBytes := sizeBytes
 
 	for bytesWritten < totalBytes {
 		// Fill buffer with random data
@@ -53,14 +58,14 @@ func Generate1GBOfRandomData(w io.Writer) error {
 
 		// Calculate how many bytes to write in this iteration
 		remaining := totalBytes - bytesWritten
-		writeSize := bufferSize
-		if remaining < bufferSize {
+		writeSize := int64(bufferSize)
+		if remaining < int64(bufferSize) {
 			writeSize = remaining
 		}
 
 		// Write the data
 		n, err := w.Write(buffer[:writeSize])
-		bytesWritten += n
+		bytesWritten += int64(n)
 		if err != nil {
 			return fmt.Errorf("error writing random data: %w", err)
 		}
@@ -85,16 +90,27 @@ func CalculateSHA256(r io.Reader) (string, error) {
 	return hex.EncodeToString(hashSum), nil
 }
 
-// SimulateWork performs CPU and I/O intensive work by generating 1GB of random data
+// SimulateWork performs CPU and I/O intensive work by generating random data
 // and calculating its SHA256 checksum. It returns the checksum and any error encountered.
-func SimulateWork() (string, error) {
+// The amount of data generated is determined by the provided sizeBytes parameter.
+func SimulateWork(sizeBytes int64) (string, error) {
 	// Create a pipe to connect the writer and reader
 	pr, pw := io.Pipe()
-	defer pr.Close()
 
-	// Channel to collect the hash result
+	// Channel to collect the results
 	hashChan := make(chan string, 1)
-	errChan := make(chan error, 1)
+	errChan := make(chan error, 2)
+
+	// Start a goroutine to generate the data and write it to the pipe
+	go func() {
+		defer pw.Close()
+		err := GenerateRandomData(pw, sizeBytes)
+		if err != nil {
+			errChan <- fmt.Errorf("error generating random data: %w", err)
+		} else {
+			errChan <- nil
+		}
+	}()
 
 	// Start a goroutine to calculate the hash as data is being written
 	go func() {
@@ -106,25 +122,17 @@ func SimulateWork() (string, error) {
 		hashChan <- hash
 	}()
 
-	// Generate 1GB of random data and write it to the pipe
-	err := Generate1GBOfRandomData(pw)
+	// Wait for the first error or completion
+	err := <-errChan
 	if err != nil {
-		pw.Close() // Ensure the pipe is closed in case of error
-		return "", fmt.Errorf("error generating random data: %w", err)
+		pr.Close() // Ensure the reader is closed on error
+		return "", fmt.Errorf("error in data generation: %w", err)
 	}
 
-	// Close the writer to signal EOF to the reader
-	if err := pw.Close(); err != nil {
-		return "", fmt.Errorf("error closing pipe writer: %w", err)
-	}
-
-	// Wait for the hash calculation to complete
-	select {
-	case hash := <-hashChan:
-		return hash, nil
-	case err := <-errChan:
-		return "", err
-	}
+	// Get the hash result
+	hash := <-hashChan
+	pr.Close() // Close the reader after we've got the hash
+	return hash, nil
 }
 
 func (c *Consumer) Consume(ctx context.Context) error {
@@ -146,7 +154,7 @@ func (c *Consumer) Consume(ctx context.Context) error {
 			for _, msg := range entries[0].Messages {
 				fmt.Printf("Processing pending message ID %s: %v\n", msg.ID, msg.Values)
 				// Simulate work
-				_, err := SimulateWork()
+				_, err := SimulateWork(c.dataSizeBytes)
 				if err != nil {
 					return fmt.Errorf("error simulating work: %w", err)
 				}
@@ -178,7 +186,7 @@ func (c *Consumer) Consume(ctx context.Context) error {
 				for _, msg := range entries[0].Messages {
 					fmt.Printf("Processing new message ID %s: %v\n", msg.ID, msg.Values)
 					// Simulate work
-					_, err := SimulateWork()
+					_, err := SimulateWork(c.dataSizeBytes)
 					if err != nil {
 						return fmt.Errorf("error simulating work: %w", err)
 					}

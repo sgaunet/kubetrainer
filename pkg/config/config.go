@@ -20,9 +20,14 @@ type DBConfig struct {
 }
 
 // ConfigRepository is a struct that holds the configuration for the repository (database)
+type ProducerConfig struct {
+	DataSizeBytes int64 `yaml:"data_size_bytes" env:"DATA_SIZE_BYTES"`
+}
+
 type Config struct {
-	DBCfg    DBConfig    `yaml:"db"    envPrefix:"DB_"`
-	RedisCfg RedisConfig `yaml:"redis" envPrefix:"REDIS_"`
+	DBCfg       DBConfig       `yaml:"db"       envPrefix:"DB_"`
+	RedisCfg    RedisConfig    `yaml:"redis"    envPrefix:"REDIS_"`
+	ProducerCfg ProducerConfig `yaml:"producer" envPrefix:"PRODUCER_"`
 }
 
 func LoadConfigFromFile(filename string) (*Config, error) {
@@ -71,4 +76,12 @@ func (cfg *Config) IsRedisConfig() bool {
 		return false
 	}
 	return true
+}
+
+// DefaultDataSize returns the configured data size in bytes, or 1GB if not set
+func (cfg *Config) DefaultDataSize() int64 {
+	if cfg.ProducerCfg.DataSizeBytes <= 0 {
+		return 1024 * 1024 * 1024 // 1GB default
+	}
+	return cfg.ProducerCfg.DataSizeBytes
 }

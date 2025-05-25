@@ -62,8 +62,13 @@ func main() {
 		}
 		defer redisClient.Close()
 
-		// Create consumer
-		c := consumer.NewConsumer(redisClient, os.Getenv("REDIS_STREAMNAME"), os.Getenv("REDIS_STREAMGROUP"))
+		// Create consumer with configurable data size
+		c := consumer.NewConsumer(
+			redisClient, 
+			os.Getenv("REDIS_STREAMNAME"), 
+			os.Getenv("REDIS_STREAMGROUP"),
+			cfg.DefaultDataSize(),
+		)
 		ctx := context.Background()
 
 		// Initialize consumer group
