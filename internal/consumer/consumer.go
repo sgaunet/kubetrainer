@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/xid"
@@ -178,8 +177,11 @@ func (c *Consumer) Consume(ctx context.Context) error {
 			if len(entries) > 0 && len(entries[0].Messages) > 0 {
 				for _, msg := range entries[0].Messages {
 					fmt.Printf("Processing new message ID %s: %v\n", msg.ID, msg.Values)
-					// Simulate work by sleeping for 10 seconds
-					time.Sleep(10 * time.Second)
+					// Simulate work
+					_, err := SimulateWork()
+					if err != nil {
+						return fmt.Errorf("error simulating work: %w", err)
+					}
 					if err := c.rdb.XAck(ctx, c.streamName, c.consumerGroupName, msg.ID).Err(); err != nil {
 						return fmt.Errorf("error acknowledging message: %w", err)
 					}
