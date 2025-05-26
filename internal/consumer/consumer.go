@@ -138,7 +138,22 @@ func SimulateWork(sizeBytes int64) (string, error) {
 func (c *Consumer) Consume(ctx context.Context) error {
 	uniqueID := xid.New().String()
 
-	// First, handle any pending messages
+	// Helper to process messages
+	processMessages := func(messages []redis.XMessage, msgType string) error {
+		for _, msg := range messages {
+			fmt.Printf("Processing %s message ID %s: %v\n", msgType, msg.ID, msg.Values)
+			_, err := SimulateWork(c.dataSizeBytes)
+			if err != nil {
+				return fmt.Errorf("error simulating work: %w", err)
+			}
+			if err := c.rdb.XAck(ctx, c.streamName, c.consumerGroupName, msg.ID).Err(); err != nil {
+				return fmt.Errorf("error acknowledging message: %w", err)
+			}
+		}
+		return nil
+	}
+
+	// Handle pending messages
 	pending := c.rdb.XPending(ctx, c.streamName, c.consumerGroupName).Val()
 	if pending.Count > 0 {
 		entries, err := c.rdb.XReadGroup(ctx, &redis.XReadGroupArgs{
@@ -151,21 +166,13 @@ func (c *Consumer) Consume(ctx context.Context) error {
 			return fmt.Errorf("error reading pending messages: %w", err)
 		}
 		if len(entries) > 0 && len(entries[0].Messages) > 0 {
-			for _, msg := range entries[0].Messages {
-				fmt.Printf("Processing pending message ID %s: %v\n", msg.ID, msg.Values)
-				// Simulate work
-				_, err := SimulateWork(c.dataSizeBytes)
-				if err != nil {
-					return fmt.Errorf("error simulating work: %w", err)
-				}
-				if err := c.rdb.XAck(ctx, c.streamName, c.consumerGroupName, msg.ID).Err(); err != nil {
-					return fmt.Errorf("error acknowledging message: %w", err)
-				}
+			if err := processMessages(entries[0].Messages, "pending"); err != nil {
+				return err
 			}
 		}
 	}
 
-	// Then read new messages
+	// Read new messages in a loop
 	for {
 		select {
 		case <-ctx.Done():
@@ -181,20 +188,12 @@ func (c *Consumer) Consume(ctx context.Context) error {
 			if err != nil {
 				return fmt.Errorf("error reading new messages: %w", err)
 			}
-
 			if len(entries) > 0 && len(entries[0].Messages) > 0 {
-				for _, msg := range entries[0].Messages {
-					fmt.Printf("Processing new message ID %s: %v\n", msg.ID, msg.Values)
-					// Simulate work
-					_, err := SimulateWork(c.dataSizeBytes)
-					if err != nil {
-						return fmt.Errorf("error simulating work: %w", err)
-					}
-					if err := c.rdb.XAck(ctx, c.streamName, c.consumerGroupName, msg.ID).Err(); err != nil {
-						return fmt.Errorf("error acknowledging message: %w", err)
-					}
+				if err := processMessages(entries[0].Messages, "new"); err != nil {
+					return err
 				}
 			}
 		}
 	}
 }
+
