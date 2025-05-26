@@ -157,8 +157,11 @@ func (c *Consumer) Consume(ctx context.Context) error {
 			fmt.Printf("Processing %s message ID %s: %v\n", msgType, msg.ID, msg.Values)
 			_, err := SimulateWork(ctx, c.dataSizeBytes)
 			if err != nil {
+				fmt.Printf("Simulate work finished with error for message ID %s: %v\n", msg.ID, err)
 				return fmt.Errorf("error simulating work: %w", err)
 			}
+			fmt.Printf("Simulate work finished successfully for message ID %s\n", msg.ID)
+
 			if err := c.rdb.XAck(ctx, c.streamName, c.consumerGroupName, msg.ID).Err(); err != nil {
 				return fmt.Errorf("error acknowledging message: %w", err)
 			}
