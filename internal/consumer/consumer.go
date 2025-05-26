@@ -93,7 +93,7 @@ func CalculateSHA256(r io.Reader) (string, error) {
 // SimulateWork performs CPU and I/O intensive work by generating random data
 // and calculating its SHA256 checksum. It returns the checksum and any error encountered.
 // The amount of data generated is determined by the provided sizeBytes parameter.
-func SimulateWork(sizeBytes int64) (string, error) {
+func SimulateWork(ctx context.Context, sizeBytes int64) (string, error) {
 	// Create a pipe to connect the writer and reader
 	pr, pw := io.Pipe()
 
@@ -122,17 +122,30 @@ func SimulateWork(sizeBytes int64) (string, error) {
 		hashChan <- hash
 	}()
 
-	// Wait for the first error or completion
-	err := <-errChan
-	if err != nil {
-		pr.Close() // Ensure the reader is closed on error
-		return "", fmt.Errorf("error in data generation: %w", err)
+	// Wait for error, hash, or context cancellation
+	for {
+		select {
+		case <-ctx.Done():
+			pr.Close()
+			pw.Close()
+			return "", ctx.Err()
+		case err := <-errChan:
+			if err != nil {
+				pr.Close() // Ensure the reader is closed on error
+				return "", fmt.Errorf("error in data generation: %w", err)
+			}
+			// Wait for hash result
+			select {
+			case hash := <-hashChan:
+				pr.Close() // Close the reader after we've got the hash
+				return hash, nil
+			case <-ctx.Done():
+				pr.Close()
+				pw.Close()
+				return "", ctx.Err()
+			}
+		}
 	}
-
-	// Get the hash result
-	hash := <-hashChan
-	pr.Close() // Close the reader after we've got the hash
-	return hash, nil
 }
 
 func (c *Consumer) Consume(ctx context.Context) error {
@@ -142,7 +155,7 @@ func (c *Consumer) Consume(ctx context.Context) error {
 	processMessages := func(messages []redis.XMessage, msgType string) error {
 		for _, msg := range messages {
 			fmt.Printf("Processing %s message ID %s: %v\n", msgType, msg.ID, msg.Values)
-			_, err := SimulateWork(c.dataSizeBytes)
+			_, err := SimulateWork(ctx, c.dataSizeBytes)
 			if err != nil {
 				return fmt.Errorf("error simulating work: %w", err)
 			}
