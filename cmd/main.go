@@ -64,10 +64,10 @@ func main() {
 
 		// Create consumer with configurable data size
 		c := consumer.NewConsumer(
-			redisClient, 
-			os.Getenv("REDIS_STREAMNAME"), 
+			redisClient,
+			os.Getenv("REDIS_STREAMNAME"),
 			os.Getenv("REDIS_STREAMGROUP"),
-			cfg.DefaultDataSize(),
+			cfg.ProducerCfg.DataSizeBytes,
 		)
 		ctx := context.Background()
 
