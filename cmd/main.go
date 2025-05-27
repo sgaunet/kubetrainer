@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"sync"
 
 	_ "github.com/lib/pq"
 	"github.com/sgaunet/kubetrainer/internal/consumer"
@@ -78,12 +79,22 @@ func main() {
 			os.Exit(1)
 		}
 
-		// Start consuming in a goroutine
+		// Use context with cancel for graceful shutdown
+		ctx, cancel := context.WithCancel(ctx)
+		var wg sync.WaitGroup
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			for {
-				err := c.Consume(ctx)
-				if err != nil {
-					log.Printf("Error consuming message: %v\n", err)
+				select {
+				case <-ctx.Done():
+					// Context cancelled, finish current calculation and exit
+					return
+				default:
+					err := c.Consume(ctx)
+					if err != nil {
+						log.Printf("Error consuming message: %v\n", err)
+					}
 				}
 			}
 		}()
@@ -91,6 +102,19 @@ func main() {
 		// Wait for stop signal
 		<-stopChan
 		fmt.Println("\nShutting down consumer...")
+		// Allow up to 120s for graceful shutdown (matches Kubernetes terminationGracePeriodSeconds)
+		shutdownDone := make(chan struct{})
+		go func() {
+			cancel()
+			wg.Wait()
+			close(shutdownDone)
+		}()
+		select {
+		case <-shutdownDone:
+			fmt.Println("Consumer shutdown gracefully.")
+		case <-time.After(120 * time.Second):
+			fmt.Fprintln(os.Stderr, "Graceful shutdown timed out, forcing exit.")
+		}
 		os.Exit(0)
 	}
 
