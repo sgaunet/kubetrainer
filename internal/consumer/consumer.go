@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/xid"
@@ -148,6 +149,52 @@ func SimulateWork(ctx context.Context, sizeBytes int64) (string, error) {
 	}
 }
 
+func (c *Consumer) claimStuckMessages(ctx context.Context, uniqueID string) error {
+	// Consider messages stuck if idle for more than 1 minute (60000 ms)
+	const minIdleTimeMs = 60000
+	const batchSize = 10
+
+	pendingResult := c.rdb.XPendingExt(ctx, &redis.XPendingExtArgs{
+		Stream:   c.streamName,
+		Group:    c.consumerGroupName,
+		Count:    batchSize,
+		Idle:     minIdleTimeMs,
+		Start:    "-",
+		End:      "+",
+	}).Val()
+
+	if len(pendingResult) == 0 {
+		return nil
+	}
+
+	var idsToClaim []string
+	for _, p := range pendingResult {
+		if p.Consumer != uniqueID && p.Idle >= minIdleTimeMs {
+			idsToClaim = append(idsToClaim, p.ID)
+		}
+	}
+	if len(idsToClaim) == 0 {
+		return nil
+	}
+
+	claimed, err := c.rdb.XClaim(ctx, &redis.XClaimArgs{
+		Stream:   c.streamName,
+		Group:    c.consumerGroupName,
+		Consumer: uniqueID,
+		MinIdle:  minIdleTimeMs,
+		Messages: idsToClaim,
+	}).Result()
+	if err != nil {
+		return fmt.Errorf("error claiming stuck messages: %w", err)
+	}
+	if len(claimed) > 0 {
+		for _, msg := range claimed {
+			fmt.Printf("Claimed stuck message ID %s: %v\n", msg.ID, msg.Values)
+		}
+	}
+	return nil
+}
+
 func (c *Consumer) Consume(ctx context.Context) error {
 	uniqueID := xid.New().String()
 
@@ -188,11 +235,19 @@ func (c *Consumer) Consume(ctx context.Context) error {
 		}
 	}
 
+	// Set up a ticker to check for stuck messages every minute
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+
 	// Read new messages in a loop
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
+		case <-ticker.C:
+			if err := c.claimStuckMessages(ctx, uniqueID); err != nil {
+				fmt.Printf("Error claiming stuck messages: %v\n", err)
+			}
 		default:
 			entries, err := c.rdb.XReadGroup(ctx, &redis.XReadGroupArgs{
 				Group:    c.consumerGroupName,
