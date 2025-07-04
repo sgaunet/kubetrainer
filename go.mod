@@ -5,7 +5,7 @@ go 1.24
 require (
 	github.com/amacneil/dbmate/v2 v2.27.0
 	github.com/caarlos0/env/v11 v11.3.1
-	github.com/go-chi/chi/v5 v5.2.1
+	github.com/go-chi/chi/v5 v5.2.2
 	github.com/lib/pq v1.10.9
 	github.com/redis/go-redis/v9 v9.9.0
 	github.com/rs/xid v1.6.0
