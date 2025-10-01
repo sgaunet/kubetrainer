@@ -10,7 +10,7 @@ require (
 	github.com/redis/go-redis/v9 v9.14.0
 	github.com/rs/xid v1.6.0
 	github.com/sgaunet/dsn/v2 v2.3.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.39.0
 	gopkg.in/yaml.v2 v2.4.0
 )
