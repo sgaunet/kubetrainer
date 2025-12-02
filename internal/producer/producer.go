@@ -23,6 +23,10 @@ func NewProducer(redisClient *redis.Client, streamName string) *Producer {
 }
 
 func (p *Producer) Publish(ctx context.Context, message string) error {
+	// Check if Redis client is initialized
+	if p.rdb == nil {
+		return errors.New("redis client is not initialized")
+	}
 
 	err := p.rdb.XAdd(ctx, &redis.XAddArgs{
 		Stream: p.streamName,
@@ -40,6 +44,11 @@ func (p *Producer) Publish(ctx context.Context, message string) error {
 }
 
 func (p *Producer) GetPendingMessagesCount(ctx context.Context, consumerGroupName string) (int64, error) {
+	// Check if Redis client is initialized
+	if p.rdb == nil {
+		return 0, nil
+	}
+
 	// Get consumer group information
 	groups, err := p.rdb.XInfoGroups(ctx, p.streamName).Result()
 	if err != nil {

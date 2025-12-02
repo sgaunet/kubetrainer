@@ -49,6 +49,9 @@ func (h *Controller) UpdateReadinessState() {
 }
 
 func (h *Controller) GetPendingMessagesCount(ctx context.Context) int64 {
+	if h.producer == nil {
+		return 0
+	}
 	count, err := h.producer.GetPendingMessagesCount(ctx, h.consumerGroupName)
 	if err != nil {
 		fmt.Println("Error getting pending messages count:", err)
@@ -60,13 +63,13 @@ func (h *Controller) GetPendingMessagesCount(ctx context.Context) int64 {
 func (h *Controller) ChangeLivenessState(w http.ResponseWriter, r *http.Request) {
 	h.UpdateLivenessState()
 	count := h.GetPendingMessagesCount(r.Context())
-	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w)
+	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.IsDBConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w)
 }
 
 func (h *Controller) ChangeReadinessState(w http.ResponseWriter, r *http.Request) {
 	h.UpdateReadinessState()
 	count := h.GetPendingMessagesCount(r.Context())
-	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w)
+	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.IsDBConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w)
 }
 
 func (h *Controller) Readiness(w http.ResponseWriter, r *http.Request) {
@@ -91,6 +94,14 @@ func (h *Controller) Liveness(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("ok"))
 }
 
+// IsDBConnected checks if database is connected
+func (h *Controller) IsDBConnected() bool {
+	if h.db == nil {
+		return false
+	}
+	return h.db.IsConnected()
+}
+
 // IsRedisConnected checks if Redis is connected
 func (h *Controller) IsRedisConnected() bool {
 	if h.rdb == nil {
@@ -107,15 +118,23 @@ func (h *Controller) PublishTime(w http.ResponseWriter, r *http.Request) {
 	if countParam < 1 {
 		countParam = 1
 	}
+
+	// Check if producer is initialized
+	if h.producer == nil {
+		count := h.GetPendingMessagesCount(r.Context())
+		views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.IsDBConnected(), h.IsRedisConnected(), count, "Redis is not configured").Render(r.Context(), w)
+		return
+	}
+
 	for i := 0; i < int(countParam); i++ {
 		currentTime := time.Now().Format(time.RFC3339)
 		err := h.producer.Publish(r.Context(), currentTime)
 		if err != nil {
 			count := h.GetPendingMessagesCount(r.Context())
-			views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), count, err.Error()).Render(r.Context(), w)
+			views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.IsDBConnected(), h.IsRedisConnected(), count, err.Error()).Render(r.Context(), w)
 			return
 		}
 	}
 	count := h.GetPendingMessagesCount(r.Context())
-	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.db.IsConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w)
+	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.IsDBConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w)
 }
