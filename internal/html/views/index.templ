@@ -10,85 +10,111 @@ templ IndexPage(livenessState bool,readinessState bool,postgresState bool, redis
 <html lang="en">
   @Head()
   <body>
+    <div class="dashboard-container">
+      <!-- Header -->
+      <header class="dashboard-header">
+        <h1><a href="/">KubeTrainer</a></h1>
+        <p class="subtitle">Kubernetes Training Platform</p>
+      </header>
 
-    <main class="container">
-    <div class="container w-50 p-3">
-      @ModalError(ErrorMsg)
-
-      <main class="form-signin w-100 m-auto">
-        <h1 class="h3 mb-3 fw-normal"><a href="/">kubetrainer</a></h1>
-        <table  class="w-100">
-          <tr>
-            <td class="w-50">
-              <a href="/update-liveness" class="w-100 btn btn-lg btn-primary">
+      <!-- Dashboard Grid -->
+      <div class="dashboard-grid">
+        <!-- Card 1: Health Probes -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h3>Health Probes</h3>
+          </div>
+          <div class="card-body">
+            <!-- Liveness Probe -->
+            <div class="probe-control">
+              <div class="probe-status">
                 if livenessState {
-                  <span class="badge bg-success">Liveness OK</span>
+                  <span class="status-indicator status-ok"></span>
+                  <span class="probe-label">Liveness</span>
+                  <span class="badge bg-success">Active</span>
                 } else {
-                  <span class="badge bg-danger">Liveness KO</span>
+                  <span class="status-indicator status-error"></span>
+                  <span class="probe-label">Liveness</span>
+                  <span class="badge bg-danger">Inactive</span>
                 }
-              </a>
-            </td>
-            <td class="w-50">
-              <a href="/update-readiness" class="w-100 btn btn-lg btn-primary">
-                if readinessState {
-                  <span class="badge bg-success">Readiness OK</span>
-                } else {
-                  <span class="badge bg-danger">Readiness KO</span>
-                }
-              </a>
-            </td>
-          </tr>
-          <tr>
-            <td class="w-50 text-center">
-              if postgresState {
-                <span class="badge bg-success">PostgreSQL Connected</span>
-              } else {
-                <span class="badge bg-danger">PostgreSQL Disconnected</span>
-              }
-            </td>
-            <td class="w-50 text-center">
-              if redisState {
-                <span class="badge bg-success">Redis Connected</span>
-              } else {
-                <span class="badge bg-danger">Redis Disconnected</span>
-              }
-            </td>
-          </tr>
-          <tr>
-            <td class="w-50 text-center">
-              // <div class="d-flex flex-column align-items-center gap-2">
-                <form action="/publish-time" method="POST" class="w-100">
-                  <button type="submit" class="w-100 btn btn-lg btn-primary">
-                    Publish Current Time
-                  </button>
-                </form>
-              // </div>
-            </td>
-            <td class="w-50">
-              <form action="/publish-time/100" method="POST" class="w-100">
-                <button type="submit" class="w-100 btn btn-lg btn-primary">
-                  Publish 100
-                </button>
-              </form>
-            </td>
-          </tr>
-          <tr>
-            <td class="w-50">
-              <div class="d-flex flex-column align-items-center gap-2">
-                <div class="badge bg-info fs-6">
-                  Pending Messages: { fmt.Sprint(pendingMessages) }
-                </div>
               </div>
-            </td>
-            <td class="w-50">
-              
-            </td>
-          </tr>
-        </table>
-      </main>
+              <a href="/update-liveness" class="btn btn-sm btn-outline-primary">Toggle</a>
+            </div>
+
+            <!-- Readiness Probe -->
+            <div class="probe-control">
+              <div class="probe-status">
+                if readinessState {
+                  <span class="status-indicator status-ok"></span>
+                  <span class="probe-label">Readiness</span>
+                  <span class="badge bg-success">Active</span>
+                } else {
+                  <span class="status-indicator status-error"></span>
+                  <span class="probe-label">Readiness</span>
+                  <span class="badge bg-danger">Inactive</span>
+                }
+              </div>
+              <a href="/update-readiness" class="btn btn-sm btn-outline-primary">Toggle</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: System Status -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h3>System Status</h3>
+          </div>
+          <div class="card-body">
+            <!-- PostgreSQL Status -->
+            <div class="status-item">
+              <span class="service-name">PostgreSQL</span>
+              if postgresState {
+                <span class="badge bg-success">Connected</span>
+              } else {
+                <span class="badge bg-danger">Disconnected</span>
+              }
+            </div>
+
+            <!-- Redis Status -->
+            <div class="status-item">
+              <span class="service-name">Redis</span>
+              if redisState {
+                <span class="badge bg-success">Connected</span>
+              } else {
+                <span class="badge bg-danger">Disconnected</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Message Publisher -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h3>Message Publisher</h3>
+          </div>
+          <div class="card-body">
+            <form action="/publish-time" method="POST" class="mb-3">
+              <button type="submit" class="btn btn-primary btn-lg w-100">
+                Publish Current Time
+              </button>
+            </form>
+            <form action="/publish-time/100" method="POST">
+              <button type="submit" class="btn btn-outline-primary btn-lg w-100">
+                Publish 100 Messages
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Card 4: Metrics -->
+        <div class="dashboard-card metric-card">
+          <div class="metric-value">{ fmt.Sprint(pendingMessages) }</div>
+          <div class="metric-label">Pending Messages</div>
+        </div>
+      </div>
     </div>
-    </main>
-    
+
+    @ModalError(ErrorMsg)
     @BootstrapBundle()
     @ErrorJS(ErrorMsg!="")
   </body>
