@@ -1,4 +1,4 @@
-FROM alpine:3.23.2 AS alpine
+FROM alpine:3.23.3 AS alpine
 
 FROM scratch AS final
 WORKDIR /usr/local/bin
