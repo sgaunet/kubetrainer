@@ -6,7 +6,7 @@ require (
 	github.com/amacneil/dbmate/v2 v2.31.0
 	github.com/caarlos0/env/v11 v11.4.0
 	github.com/go-chi/chi/v5 v5.2.5
-	github.com/lib/pq v1.11.2
+	github.com/lib/pq v1.12.1
 	github.com/redis/go-redis/v9 v9.18.0
 	github.com/rs/xid v1.6.0
 	github.com/sgaunet/dsn/v2 v2.3.0
