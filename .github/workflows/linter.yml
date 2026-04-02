@@ -19,16 +19,14 @@ jobs:
         with:
           repo: go-task/task
           cache: enable
-          # tag: 
+
+      - name: Generate templ templates
+        run: go generate ./...
       - name: Install golangci-lint
         uses: jaxxstorm/action-install-gh-release@v1.12.0
         with:
           repo: golangci/golangci-lint
-          tag: v2.2.2
+          tag: v2.11.4
           cache: enable
-          binaries-location: golangci-lint-2.2.2-linux-amd64
-
       - name: Run linter
-        shell: /usr/bin/bash {0}
-        run: |
-          task lint
+        run: task lint
