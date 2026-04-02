@@ -1,0 +1,33 @@
+name: linter
+
+on:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+      - name: Install task
+        uses: jaxxstorm/action-install-gh-release@v1.12.0
+        with:
+          repo: go-task/task
+          cache: enable
+
+      - name: Generate templ templates
+        run: go generate ./...
+      - name: Install golangci-lint
+        uses: jaxxstorm/action-install-gh-release@v1.12.0
+        with:
+          repo: golangci/golangci-lint
+          tag: v2.11.4
+          cache: enable
+          binaries-location: golangci-lint-2.11.4-linux-amd64
+      - name: Run linter
+        run: task lint
