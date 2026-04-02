@@ -7,6 +7,12 @@ tasks:
     cmds:
       - task -a
 
+  lint:
+    desc: "Run golangci-lint"
+    cmds:
+      - go generate ./...
+      - golangci-lint run
+
   # used by devbox
   run:
     desc: "Build the application"
