@@ -42,7 +42,9 @@ func TestInitDB(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer pg.Close()
+	defer func() {
+		_ = pg.Close()
+	}()
 	assert.NotNil(t, pg.DB)
 	assert.Nil(t, err)
 
@@ -60,7 +62,9 @@ func TestGetDB(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer pg.Close()
+	defer func() {
+		_ = pg.Close()
+	}()
 	db := pg.GetDB()
 	assert.NotNil(t, db)
 }

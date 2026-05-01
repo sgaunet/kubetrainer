@@ -61,7 +61,11 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error during redis initialization: %s\n", err.Error())
 			os.Exit(1)
 		}
-		defer redisClient.Close()
+		defer func() {
+			if err := redisClient.Close(); err != nil {
+				log.Printf("error closing redis client: %v\n", err)
+			}
+		}()
 
 		// Create consumer with configurable data size
 		c := consumer.NewConsumer(
