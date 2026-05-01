@@ -104,7 +104,9 @@ func SimulateWork(ctx context.Context, sizeBytes int64) (string, error) {
 
 	// Start a goroutine to generate the data and write it to the pipe
 	go func() {
-		defer pw.Close()
+		defer func() {
+			_ = pw.Close()
+		}()
 		err := GenerateRandomData(pw, sizeBytes)
 		if err != nil {
 			errChan <- fmt.Errorf("error generating random data: %w", err)
@@ -127,22 +129,22 @@ func SimulateWork(ctx context.Context, sizeBytes int64) (string, error) {
 	for {
 		select {
 		case <-ctx.Done():
-			pr.Close()
-			pw.Close()
+			_ = pr.Close()
+			_ = pw.Close()
 			return "", ctx.Err()
 		case err := <-errChan:
 			if err != nil {
-				pr.Close() // Ensure the reader is closed on error
+				_ = pr.Close() // Ensure the reader is closed on error
 				return "", fmt.Errorf("error in data generation: %w", err)
 			}
 			// Wait for hash result
 			select {
 			case hash := <-hashChan:
-				pr.Close() // Close the reader after we've got the hash
+				_ = pr.Close() // Close the reader after we've got the hash
 				return hash, nil
 			case <-ctx.Done():
-				pr.Close()
-				pw.Close()
+				_ = pr.Close()
+				_ = pw.Close()
 				return "", ctx.Err()
 			}
 		}

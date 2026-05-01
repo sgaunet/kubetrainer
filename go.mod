@@ -1,6 +1,6 @@
 module github.com/sgaunet/kubetrainer
 
-go 1.25.8
+go 1.25.9
 
 require (
 	github.com/a-h/templ v0.3.857

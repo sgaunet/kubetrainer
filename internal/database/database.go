@@ -62,11 +62,12 @@ func WaitForDB(ctx context.Context, pgdsn string) error {
 			default:
 				if err == nil {
 					err = db.Ping()
-					defer db.Close()
 					if err == nil {
+						_ = db.Close()
 						close(chDBReady)
 						return
 					}
+					_ = db.Close()
 					fmt.Println("Database not ready (not pingable)")
 					time.Sleep(1 * time.Second)
 				}

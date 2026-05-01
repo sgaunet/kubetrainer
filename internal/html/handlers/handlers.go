@@ -63,35 +63,47 @@ func (h *Controller) GetPendingMessagesCount(ctx context.Context) int64 {
 func (h *Controller) ChangeLivenessState(w http.ResponseWriter, r *http.Request) {
 	h.UpdateLivenessState()
 	count := h.GetPendingMessagesCount(r.Context())
-	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.IsDBConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w)
+	if err := views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.IsDBConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w); err != nil {
+		fmt.Println("error rendering index page:", err)
+	}
 }
 
 func (h *Controller) ChangeReadinessState(w http.ResponseWriter, r *http.Request) {
 	h.UpdateReadinessState()
 	count := h.GetPendingMessagesCount(r.Context())
-	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.IsDBConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w)
+	if err := views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.IsDBConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w); err != nil {
+		fmt.Println("error rendering index page:", err)
+	}
 }
 
 func (h *Controller) Readiness(w http.ResponseWriter, r *http.Request) {
 	state := h.readinessState.Load()
 	if !state {
 		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write([]byte("not ready yet"))
+		if _, err := w.Write([]byte("not ready yet")); err != nil {
+			fmt.Println("error writing readiness response:", err)
+		}
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("ok"))
+	if _, err := w.Write([]byte("ok")); err != nil {
+		fmt.Println("error writing readiness response:", err)
+	}
 }
 
 func (h *Controller) Liveness(w http.ResponseWriter, r *http.Request) {
 	state := h.livenessState.Load()
 	if !state {
 		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write([]byte("not live"))
+		if _, err := w.Write([]byte("not live")); err != nil {
+			fmt.Println("error writing liveness response:", err)
+		}
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("ok"))
+	if _, err := w.Write([]byte("ok")); err != nil {
+		fmt.Println("error writing liveness response:", err)
+	}
 }
 
 // IsDBConnected checks if database is connected
@@ -122,7 +134,9 @@ func (h *Controller) PublishTime(w http.ResponseWriter, r *http.Request) {
 	// Check if producer is initialized
 	if h.producer == nil {
 		count := h.GetPendingMessagesCount(r.Context())
-		views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.IsDBConnected(), h.IsRedisConnected(), count, "Redis is not configured").Render(r.Context(), w)
+		if err := views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.IsDBConnected(), h.IsRedisConnected(), count, "Redis is not configured").Render(r.Context(), w); err != nil {
+			fmt.Println("error rendering index page:", err)
+		}
 		return
 	}
 
@@ -131,10 +145,14 @@ func (h *Controller) PublishTime(w http.ResponseWriter, r *http.Request) {
 		err := h.producer.Publish(r.Context(), currentTime)
 		if err != nil {
 			count := h.GetPendingMessagesCount(r.Context())
-			views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.IsDBConnected(), h.IsRedisConnected(), count, err.Error()).Render(r.Context(), w)
+			if renderErr := views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.IsDBConnected(), h.IsRedisConnected(), count, err.Error()).Render(r.Context(), w); renderErr != nil {
+				fmt.Println("error rendering index page:", renderErr)
+			}
 			return
 		}
 	}
 	count := h.GetPendingMessagesCount(r.Context())
-	views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.IsDBConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w)
+	if err := views.IndexPage(h.livenessState.Load(), h.readinessState.Load(), h.IsDBConnected(), h.IsRedisConnected(), count, "").Render(r.Context(), w); err != nil {
+		fmt.Println("error rendering index page:", err)
+	}
 }
