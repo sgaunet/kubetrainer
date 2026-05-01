@@ -2,15 +2,16 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
-	"sync"
 
 	_ "github.com/lib/pq"
 	"github.com/sgaunet/kubetrainer/internal/consumer"
@@ -18,151 +19,185 @@ import (
 	"github.com/sgaunet/kubetrainer/pkg/config"
 )
 
+const (
+	stopChanBufferSize      = 5
+	consumerShutdownTimeout = 120 * time.Second
+	serverShutdownTimeout   = 15 * time.Second
+)
+
+// errRedisRequired is returned when consumer mode lacks Redis configuration.
+var errRedisRequired = errors.New("redis configuration is required for consumer mode")
+
+// errShutdownTimeout is returned when the consumer fails to shutdown within the deadline.
+var errShutdownTimeout = errors.New("graceful shutdown timed out, forcing exit")
+
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	var (
-		err                   error
-		cfg                   *config.Config
 		configurationFileName string
-		wOpts                 []server.WebServerOption
 		consumerMode          bool
 	)
-	// debug.SetMemoryLimit(1024 * 1024 * 1024 * 2)
 	flag.StringVar(&configurationFileName, "f", "", "Configuration file")
 	flag.BoolVar(&consumerMode, "consumer", false, "Run in consumer mode")
 	flag.Parse()
 
-	if len(configurationFileName) == 0 {
-		cfg, err = config.LoadConfigFromEnv()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "cannot load configuration: %s\n", err.Error())
-			os.Exit(1)
-		}
-	} else {
-		cfg, err = config.LoadConfigFromFile(configurationFileName)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "cannot load configuration: %s\n", err.Error())
-			os.Exit(1)
-		}
+	cfg, err := loadConfig(configurationFileName)
+	if err != nil {
+		return fmt.Errorf("cannot load configuration: %w", err)
 	}
 
-	// Create a channel to listen for OS signals
-	stopChan := make(chan os.Signal, 5)
-	// Notify the stopChan when an interrupt or terminate signal is received
+	stopChan := make(chan os.Signal, stopChanBufferSize)
 	signal.Notify(stopChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	if consumerMode {
-		if !cfg.IsRedisConfig() {
-			fmt.Fprintf(os.Stderr, "Redis configuration is required for consumer mode\n")
-			os.Exit(1)
-		}
+		return runConsumer(cfg, stopChan)
+	}
+	return runWebServer(cfg, stopChan)
+}
 
-		redisClient, err := initRedisConnection(cfg.RedisCfg.RedisDSN)
+func loadConfig(filename string) (*config.Config, error) {
+	if len(filename) == 0 {
+		cfg, err := config.LoadConfigFromEnv()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error during redis initialization: %s\n", err.Error())
-			os.Exit(1)
+			return nil, fmt.Errorf("loading config from env: %w", err)
 		}
-		defer func() {
-			if err := redisClient.Close(); err != nil {
-				log.Printf("error closing redis client: %v\n", err)
-			}
-		}()
+		return cfg, nil
+	}
+	cfg, err := config.LoadConfigFromFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("loading config from file: %w", err)
+	}
+	return cfg, nil
+}
 
-		// Create consumer with configurable data size
-		c := consumer.NewConsumer(
-			redisClient,
-			os.Getenv("REDIS_STREAMNAME"),
-			os.Getenv("REDIS_STREAMGROUP"),
-			cfg.ProducerCfg.DataSizeBytes,
-		)
-		ctx := context.Background()
-
-		// Initialize consumer group
-		err = c.InitConsumer(ctx)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error initializing consumer: %s\n", err.Error())
-			os.Exit(1)
-		}
-
-		// Use context with cancel for graceful shutdown
-		ctx, cancel := context.WithCancel(ctx)
-		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for {
-				select {
-				case <-ctx.Done():
-					// Context cancelled, finish current calculation and exit
-					return
-				default:
-					err := c.Consume(ctx)
-					if err != nil {
-						log.Printf("Error consuming message: %v\n", err)
-					}
-				}
-			}
-		}()
-
-		// Wait for stop signal
-		<-stopChan
-		fmt.Println("\nShutting down consumer...")
-		// Allow up to 120s for graceful shutdown (matches Kubernetes terminationGracePeriodSeconds)
-		shutdownDone := make(chan struct{})
-		go func() {
-			cancel()
-			wg.Wait()
-			close(shutdownDone)
-		}()
-		select {
-		case <-shutdownDone:
-			fmt.Println("Consumer shutdown gracefully.")
-		case <-time.After(120 * time.Second):
-			fmt.Fprintln(os.Stderr, "Graceful shutdown timed out, forcing exit.")
-		}
-		os.Exit(0)
+func runConsumer(cfg *config.Config, stopChan <-chan os.Signal) error {
+	if !cfg.IsRedisConfig() {
+		return errRedisRequired
 	}
 
-	// Web server mode
+	redisClient, err := initRedisConnection(cfg.RedisCfg.RedisDSN)
+	if err != nil {
+		return fmt.Errorf("error during redis initialization: %w", err)
+	}
+	defer func() {
+		if cerr := redisClient.Close(); cerr != nil {
+			log.Printf("error closing redis client: %v\n", cerr)
+		}
+	}()
+
+	c := consumer.NewConsumer(
+		redisClient,
+		os.Getenv("REDIS_STREAMNAME"),
+		os.Getenv("REDIS_STREAMGROUP"),
+		cfg.ProducerCfg.DataSizeBytes,
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := c.InitConsumer(ctx); err != nil {
+		return fmt.Errorf("error initializing consumer: %w", err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Go(func() {
+		consumeLoop(ctx, c)
+	})
+
+	<-stopChan
+	fmt.Println("\nShutting down consumer...")
+	return waitForConsumerShutdown(cancel, &wg)
+}
+
+func consumeLoop(ctx context.Context, c *consumer.Consumer) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			if err := c.Consume(ctx); err != nil {
+				log.Printf("Error consuming message: %v\n", err)
+			}
+		}
+	}
+}
+
+func waitForConsumerShutdown(cancel context.CancelFunc, wg *sync.WaitGroup) error {
+	shutdownDone := make(chan struct{})
+	go func() {
+		cancel()
+		wg.Wait()
+		close(shutdownDone)
+	}()
+
+	select {
+	case <-shutdownDone:
+		fmt.Println("Consumer shutdown gracefully.")
+		return nil
+	case <-time.After(consumerShutdownTimeout):
+		return errShutdownTimeout
+	}
+}
+
+func runWebServer(cfg *config.Config, stopChan <-chan os.Signal) error {
+	wOpts, err := buildWebServerOptions(cfg)
+	if err != nil {
+		return err
+	}
+
+	w := server.NewWebServer(wOpts...)
+
+	serverErr := make(chan error, 1)
+	go func() {
+		if serr := w.Start(); serr != nil && !errors.Is(serr, http.ErrServerClosed) {
+			serverErr <- fmt.Errorf("error starting server: %w", serr)
+			return
+		}
+		serverErr <- nil
+	}()
+
+	select {
+	case err := <-serverErr:
+		if err != nil {
+			return err
+		}
+	case <-stopChan:
+		fmt.Println("\nShutting down server...")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), serverShutdownTimeout)
+	defer cancel()
+
+	if err := w.Shutdown(ctx); err != nil {
+		return fmt.Errorf("error during shutdown: %w", err)
+	}
+	return nil
+}
+
+func buildWebServerOptions(cfg *config.Config) ([]server.WebServerOption, error) {
+	var wOpts []server.WebServerOption
 	if cfg.IsRedisConfig() {
 		redisClient, err := initRedisConnection(cfg.RedisCfg.RedisDSN)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error during redis initialization: %s\n", err.Error())
-			os.Exit(1)
+			return nil, fmt.Errorf("error during redis initialization: %w", err)
 		}
-		wOpts = append(wOpts, server.WithRedisClient(redisClient))
-		wOpts = append(wOpts, server.WithStreamName(os.Getenv("REDIS_STREAMNAME")))
+		wOpts = append(wOpts,
+			server.WithRedisClient(redisClient),
+			server.WithStreamName(os.Getenv("REDIS_STREAMNAME")),
+		)
 	}
 	if cfg.IsDBConfig() {
 		pg, err := initDB(cfg)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error during database initialization: %s\n", err.Error())
-			os.Exit(1)
+			return nil, fmt.Errorf("error during database initialization: %w", err)
 		}
 		wOpts = append(wOpts, server.WithDB(pg))
 	}
-	// Initialize the web server with the options
-	w := server.NewWebServer(wOpts...)
-
-	// Start the HTTP server in a goroutine
-	go func() {
-		// If ListenAndServe returns an error and it's not a server closed error,
-		// then log it as a fatal error.
-		if err := w.Start(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("error starting server: %s\n", err.Error())
-		}
-	}()
-
-	// Wait for stop signal
-	<-stopChan
-	fmt.Println("\nShutting down server...")
-
-	// Create a deadline to wait for.
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
-	defer cancel()
-
-	// Doesn't block if no connections, but will otherwise wait
-	// until the timeout deadline.
-	if err := w.Shutdown(ctx); err != nil {
-		fmt.Printf("error during shutdown: %s\n", err.Error())
-	}
+	return wOpts, nil
 }
