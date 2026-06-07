@@ -1,6 +1,6 @@
 module github.com/sgaunet/kubetrainer
 
-go 1.25.9
+go 1.26.4
 
 require (
 	github.com/amacneil/dbmate/v2 v2.33.0
