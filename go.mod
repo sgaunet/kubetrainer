@@ -3,11 +3,12 @@ module github.com/sgaunet/kubetrainer
 go 1.26.4
 
 require (
+	github.com/a-h/templ v0.3.1020
 	github.com/amacneil/dbmate/v2 v2.33.0
-	github.com/caarlos0/env/v11 v11.4.0
-	github.com/go-chi/chi/v5 v5.2.5
+	github.com/caarlos0/env/v11 v11.4.1
+	github.com/go-chi/chi/v5 v5.3.0
 	github.com/lib/pq v1.12.3
-	github.com/redis/go-redis/v9 v9.19.0
+	github.com/redis/go-redis/v9 v9.20.0
 	github.com/rs/xid v1.6.0
 	github.com/sgaunet/dsn/v2 v2.3.0
 	github.com/stretchr/testify v1.11.1
@@ -22,7 +23,6 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/a-h/parse v0.0.0-20250122154542-74294addb73e // indirect
-	github.com/a-h/templ v0.3.1001 // indirect
 	github.com/andybalholm/brotli v1.2.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
